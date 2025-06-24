@@ -1,31 +1,34 @@
 import gymnasium as gym
-from  MazeGameEnv import MazeGameEnv
+from MazeGameEnv import MazeGameEnv
 import pygame
 
 # Register the environment
 gym.register(
     id='MazeGame-v0',
-    entry_point='mazegame:MazeGameEnv', 
-    kwargs={'maze': None} 
+    entry_point=MazeGameEnv,
+    kwargs={'maze': None}
 )
 
-
-#Maze config
-
+# Maze configuration
 maze = [
-    ['S', '', '.', '.'],
+    ['S', '.', '.', '.'],
     ['.', '#', '.', '#'],
     ['.', '.', '.', '.'],
     ['#', '.', '#', 'G'],
 ]
+
 # Test the environment
-env = gym.make('MazeGame-v0',maze=maze)
+env = MazeGameEnv(maze)
 obs = env.reset()
 env.render()
 
 done = False
-while True:
-    pygame.event.get()
+while not done:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            env.close()
+            exit()
+
     action = env.action_space.sample()  # Random action selection
     obs, reward, done, _ = env.step(action)
     env.render()
@@ -33,5 +36,5 @@ while True:
     print('Done:', done)
 
     pygame.time.wait(200)
-    
 
+env.close()
