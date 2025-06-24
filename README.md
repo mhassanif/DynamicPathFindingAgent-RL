@@ -4,6 +4,8 @@
 
 This project demonstrates the creation of a custom Gymnasium environment for Reinforcement Learning (RL). The environment features a maze with obstacles, a start position, a goal, and a death-pit cell that ends the game with a penalty if the agent steps into it. The environment is designed to be compatible with **Stable-Baselines3**, making it suitable for applying RL algorithms to solve the maze.
 
+![alt text](utils/screenshot.png)
+
 ## Features
 
 1. **Customizable Maze Layout**: Define the maze with starting (`S`), goal (`G`), obstacles (`#`), death-pits (`P`), and empty spaces (`.`).
