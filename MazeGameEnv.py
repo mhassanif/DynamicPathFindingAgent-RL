@@ -12,6 +12,7 @@ class MazeGameEnv(gym.Env):
         self.goal_pos = np.where(self.maze == 'G')  # Goal position
         self.current_pos = self.start_pos #starting position is current posiiton of agent
         self.num_rows, self.num_cols = self.maze.shape
+        
 
         # 4 possible actions: 0=up, 1=down, 2=left, 3=right
         self.action_space = spaces.Discrete(4)  
@@ -50,11 +51,17 @@ class MazeGameEnv(gym.Env):
         if np.array_equal(self.current_pos, self.goal_pos):
             reward = 1.0
             done = True
+            info = {"reason": "Goal reached!"}
+        elif self.death_pit(self.current_pos):
+            reward = -1.0
+            done = True
+            info = {"reason": "Fell into death pit!"}
         else:
             reward = 0.0
             done = False
+            info = {"reason": "Continue exploring"}
 
-        return self.current_pos, reward, done, {}
+        return self.current_pos, reward, done, info
 
     def _is_valid_position(self, pos):
         row, col = pos
@@ -67,6 +74,11 @@ class MazeGameEnv(gym.Env):
         if self.maze[row, col] == '#':
             return False
         return True
+    
+    def death_pit(self,pos):
+        row, col = pos
+        if self.maze[row, col] == 'P':
+            return True
 
     def render(self):
         # Clear the screen
@@ -78,10 +90,10 @@ class MazeGameEnv(gym.Env):
                 cell_left = col * self.cell_size
                 cell_top = row * self.cell_size
             
-                try:
-                    print(np.array(self.current_pos)==np.array([row,col]).reshape(-1,1))
-                except Exception as e:
-                    print('Initial state')
+                # try:
+                #     print(np.array(self.current_pos)==np.array([row,col]).reshape(-1,1))
+                # except Exception as e:
+                #     print('Initial state')
 
                 if self.maze[row, col] == '#':  # Obstacle
                     pygame.draw.rect(self.screen, (0, 0, 0), (cell_left, cell_top, self.cell_size, self.cell_size))
@@ -89,6 +101,8 @@ class MazeGameEnv(gym.Env):
                     pygame.draw.rect(self.screen, (0, 255, 0), (cell_left, cell_top, self.cell_size, self.cell_size))
                 elif self.maze[row, col] == 'G':  # Goal position
                     pygame.draw.rect(self.screen, (255, 0, 0), (cell_left, cell_top, self.cell_size, self.cell_size))
+                elif self.maze[row, col] == 'P':  # Pit
+                    pygame.draw.rect(self.screen, (255, 165, 0), (cell_left, cell_top, self.cell_size, self.cell_size))
 
                 if np.array_equal(np.array(self.current_pos), np.array([row, col]).reshape(-1,1)):  # Agent position
                     pygame.draw.rect(self.screen, (0, 0, 255), (cell_left, cell_top, self.cell_size, self.cell_size))

@@ -12,7 +12,7 @@ gym.register(
 # Maze configuration
 maze = [
     ['S', '.', '.', '.'],
-    ['.', '#', '.', '#'],
+    ['.', '#', 'P', '#'],
     ['.', '.', '.', '.'],
     ['#', '.', '#', 'G'],
 ]
@@ -30,10 +30,12 @@ while not done:
             exit()
 
     action = env.action_space.sample()  # Random action selection
-    obs, reward, done, _ = env.step(action)
+    obs, reward, done, info = env.step(action)
     env.render()
+    print('__________________')
     print('Reward:', reward)
     print('Done:', done)
+    print('Info:', info['reason'])
 
     pygame.time.wait(200)
 
