@@ -81,30 +81,43 @@ class MazeGameEnv(gym.Env):
             return True
 
     def render(self):
-        # Clear the screen
-        self.screen.fill((255, 255, 255))  
+        # Load the PNG images (do this once, not every frame ideally)
+        obstacle_img = pygame.image.load("utils/obstacle.png")
+        obstacle_img = pygame.transform.scale(obstacle_img, (self.cell_size, self.cell_size))
 
-        # Draw env elements one cell at a time
+        start_img = pygame.image.load("utils/start.png")
+        start_img = pygame.transform.scale(start_img, (self.cell_size, self.cell_size))
+
+        goal_img = pygame.image.load("utils/goal.png")
+        goal_img = pygame.transform.scale(goal_img, (self.cell_size, self.cell_size))
+
+        pit_img = pygame.image.load("utils/fire.png")
+        pit_img = pygame.transform.scale(pit_img, (self.cell_size, self.cell_size))
+
+        agent_img = pygame.image.load("utils/spider.png")
+        agent_img = pygame.transform.scale(agent_img, (self.cell_size, self.cell_size))
+
+        # Clear the screen
+        self.screen.fill((255, 255, 255))
+
+        # Draw the environment
         for row in range(self.num_rows):
             for col in range(self.num_cols):
                 cell_left = col * self.cell_size
                 cell_top = row * self.cell_size
-            
-                # try:
-                #     print(np.array(self.current_pos)==np.array([row,col]).reshape(-1,1))
-                # except Exception as e:
-                #     print('Initial state')
 
                 if self.maze[row, col] == '#':  # Obstacle
-                    pygame.draw.rect(self.screen, (0, 0, 0), (cell_left, cell_top, self.cell_size, self.cell_size))
+                    self.screen.blit(obstacle_img, (cell_left, cell_top))
                 elif self.maze[row, col] == 'S':  # Starting position
-                    pygame.draw.rect(self.screen, (0, 255, 0), (cell_left, cell_top, self.cell_size, self.cell_size))
+                    self.screen.blit(start_img, (cell_left, cell_top))
                 elif self.maze[row, col] == 'G':  # Goal position
-                    pygame.draw.rect(self.screen, (255, 0, 0), (cell_left, cell_top, self.cell_size, self.cell_size))
+                    self.screen.blit(goal_img, (cell_left, cell_top))
                 elif self.maze[row, col] == 'P':  # Pit
-                    pygame.draw.rect(self.screen, (255, 165, 0), (cell_left, cell_top, self.cell_size, self.cell_size))
+                    self.screen.blit(pit_img, (cell_left, cell_top))
 
-                if np.array_equal(np.array(self.current_pos), np.array([row, col]).reshape(-1,1)):  # Agent position
-                    pygame.draw.rect(self.screen, (0, 0, 255), (cell_left, cell_top, self.cell_size, self.cell_size))
+                # Agent position
+                if np.array_equal(np.array(self.current_pos), np.array([row, col]).reshape(-1, 1)):
+                    self.screen.blit(agent_img, (cell_left, cell_top))
 
-        pygame.display.update()  # Update the display
+        # Update the display
+        pygame.display.update()
