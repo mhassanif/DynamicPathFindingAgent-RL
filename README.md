@@ -6,6 +6,11 @@ This project demonstrates the creation of a custom Gymnasium environment for Rei
 
 ![alt text](utils/screenshot.png)
 
+## Demo Video
+```
+https://drive.google.com/file/d/11j2hhNSLZNuGT9sk-3PGglSV1LwqpxXw/view?usp=sharing
+```
+
 ## Features
 
 1. **Customizable Maze Layout**: Define the maze with starting (`S`), goal (`G`), obstacles (`#`), death-pits (`P`), and empty spaces (`.`).

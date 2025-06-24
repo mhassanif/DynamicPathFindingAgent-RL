@@ -5,16 +5,16 @@ import pygame
 # Maze configuration
 maze = [
     ['S', '.', '.', '.'],
-    ['.', '#', 'P', '#'],
+    ['.', '#', '.', '#'],
     ['.', '.', '.', '.'],
-    ['#', '.', '#', 'G'],
+    ['#', 'P', '#', 'G'],
 ]
 
 # Initialize the environment
 env = MazeGameEnv(maze)
 
 # Define the number of episodes and steps per episode
-num_episodes = 3
+num_episodes = 5
 max_steps_per_episode = 20
 
 # Run a few episodes
