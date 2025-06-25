@@ -10,6 +10,7 @@ class MazeGameEnv(gym.Env):
         self.maze = np.array(maze)  # Maze represented as a 2D numpy array
         self.start_pos = np.argwhere(self.maze == 'S')[0]  # Starting position
         self.goal_pos = np.argwhere(self.maze == 'G')[0]  # Goal position
+        self.pit_pos = np.argwhere(self.maze == 'P')[0] # Death pit position
         self.current_pos = self.start_pos  # Starting position is the current position of the agent
         self.num_rows, self.num_cols = self.maze.shape
 
@@ -62,7 +63,7 @@ class MazeGameEnv(gym.Env):
             terminated = True
             truncated = False
             info = {"reason": "Goal reached!"}
-        elif self._is_death_pit(self.current_pos):
+        elif np.array_equal(self.current_pos, self.pit_pos):
             reward = -1.0
             terminated = True
             truncated = False
@@ -91,10 +92,6 @@ class MazeGameEnv(gym.Env):
         if self.maze[row, col] == '#':
             return False
         return True
-
-    def _is_death_pit(self, pos):
-        row, col = pos
-        return self.maze[row, col] == 'P'
 
     def _get_obs(self):
         # Normalize the agent's position between 0 and 1 with explicit float32 casting

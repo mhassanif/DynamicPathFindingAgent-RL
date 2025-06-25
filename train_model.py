@@ -4,10 +4,10 @@ from stable_baselines3 import PPO
 
 # Define your maze
 maze = [
-    ['S', '.', '.', 'G'],
-    ['#', '#', '.', '#'],
-    ['.', 'P', '.', '.'],
-    ['#', '.', '.', '#']
+    ['S', '.', '.', '.'],
+    ['.', '#', 'P', '#'],
+    ['.', '.', '.', '.'],
+    ['#', '.', '#', 'G'],
 ]
 
 # Instantiate the environment
@@ -20,7 +20,7 @@ check_env(env, warn=True)
 model = PPO("MlpPolicy", env, verbose=1)
 
 # Train the model
-model.learn(total_timesteps=10000)
+model.learn(total_timesteps=100000)
 
 # Save the model
 model.save("ppo_maze_model")
