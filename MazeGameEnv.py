@@ -19,6 +19,10 @@ class MazeGameEnv(gym.Env):
         # Observation space is a 2D position normalized between 0 and 1
         self.observation_space = spaces.Box(low=0, high=1, shape=(2,), dtype=np.float32)
 
+        # Max steps before truncation
+        self.max_steps = 200
+        self.steps = 0
+
         # Initialize Pygame
         pygame.init()
         self.cell_size = 125
@@ -27,8 +31,10 @@ class MazeGameEnv(gym.Env):
         self.screen = pygame.display.set_mode((self.num_cols * self.cell_size, self.num_rows * self.cell_size))
 
     def reset(self, seed=None, options=None):
-        # Reset the agent's position to the start
+        # Reset the environment
+        super().reset(seed=seed)  # Seed the environment for reproducibility
         self.current_pos = self.start_pos
+        self.steps = 0
         return self._get_obs(), {}
 
     def step(self, action):
@@ -47,6 +53,9 @@ class MazeGameEnv(gym.Env):
         if self._is_valid_position(new_pos):
             self.current_pos = new_pos
 
+        # Increment step count
+        self.steps += 1
+
         # Calculate reward and termination condition
         if np.array_equal(self.current_pos, self.goal_pos):
             reward = 1.0
@@ -58,8 +67,13 @@ class MazeGameEnv(gym.Env):
             terminated = True
             truncated = False
             info = {"reason": "Fell into death pit!"}
-        else:
+        elif self.steps >= self.max_steps:
             reward = 0.0
+            terminated = True
+            truncated = True
+            info = {"reason": "Time limit reached"}
+        else:
+            reward = -0.01  # Penalize every step to encourage efficiency
             terminated = False
             truncated = False
             info = {"reason": "Continue exploring"}
@@ -83,25 +97,28 @@ class MazeGameEnv(gym.Env):
         return self.maze[row, col] == 'P'
 
     def _get_obs(self):
-        # Normalize the agent's position between 0 and 1
-        return np.array(self.current_pos) / np.array([self.num_rows - 1, self.num_cols - 1], dtype=np.float32)
+        # Normalize the agent's position between 0 and 1 with explicit float32 casting
+        return np.array(self.current_pos, dtype=np.float32) / np.array([self.num_rows - 1, self.num_cols - 1], dtype=np.float32)
 
     def render(self):
-        # Load the PNG images
-        obstacle_img = pygame.image.load("utils/obstacle.png")
-        obstacle_img = pygame.transform.scale(obstacle_img, (self.cell_size, self.cell_size))
+        try:
+            obstacle_img = pygame.image.load("utils/obstacle.png")
+            obstacle_img = pygame.transform.scale(obstacle_img, (self.cell_size, self.cell_size))
 
-        start_img = pygame.image.load("utils/start.png")
-        start_img = pygame.transform.scale(start_img, (self.cell_size, self.cell_size))
+            start_img = pygame.image.load("utils/start.png")
+            start_img = pygame.transform.scale(start_img, (self.cell_size, self.cell_size))
 
-        goal_img = pygame.image.load("utils/goal.png")
-        goal_img = pygame.transform.scale(goal_img, (self.cell_size, self.cell_size))
+            goal_img = pygame.image.load("utils/goal.png")
+            goal_img = pygame.transform.scale(goal_img, (self.cell_size, self.cell_size))
 
-        pit_img = pygame.image.load("utils/fire.png")
-        pit_img = pygame.transform.scale(pit_img, (self.cell_size, self.cell_size))
+            pit_img = pygame.image.load("utils/fire.png")
+            pit_img = pygame.transform.scale(pit_img, (self.cell_size, self.cell_size))
 
-        agent_img = pygame.image.load("utils/spider.png")
-        agent_img = pygame.transform.scale(agent_img, (self.cell_size, self.cell_size))
+            agent_img = pygame.image.load("utils/spider.png")
+            agent_img = pygame.transform.scale(agent_img, (self.cell_size, self.cell_size))
+        except FileNotFoundError as e:
+            print(f"Error loading images: {e}")
+            return  # Skip rendering if images are unavailable
 
         # Clear the screen
         self.screen.fill((255, 255, 255))
@@ -129,4 +146,5 @@ class MazeGameEnv(gym.Env):
         pygame.display.update()
 
     def close(self):
-        pygame.quit()
+        if pygame.get_init():
+            pygame.quit()

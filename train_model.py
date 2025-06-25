@@ -1,25 +1,30 @@
-import gymnasium as gym
-from stable_baselines3 import PPO
-from stable_baselines3.common.vec_env import DummyVecEnv
+from stable_baselines3.common.env_checker import check_env
 from MazeGameEnv import MazeGameEnv
+from stable_baselines3 import PPO
 
-# Define the maze
+# Define your maze
 maze = [
-    ['S', '.', '.', '.'],
-    ['.', '#', 'P', '#'],
-    ['.', '.', '.', '.'],
-    ['#', '.', '#', 'G'],
+    ['S', '.', '.', 'G'],
+    ['#', '#', '.', '#'],
+    ['.', 'P', '.', '.'],
+    ['#', '.', '.', '#']
 ]
 
-# Initialize the environment
-env = DummyVecEnv([lambda: MazeGameEnv(maze)])  # Wrap the custom env in a DummyVecEnv
+# Instantiate the environment
+env = MazeGameEnv(maze)
 
-# Train the PPO model
+# Validate the environment
+check_env(env, warn=True)
+
+# Create the PPO model
 model = PPO("MlpPolicy", env, verbose=1)
-print("Training started...")
-model.learn(total_timesteps=10000)
-print("Training finished!")
 
-# Save the trained model
+# Train the model
+model.learn(total_timesteps=10000)
+
+# Save the model
 model.save("ppo_maze_model")
-print("Model saved as ppo_maze_model.zip")
+
+# Close the environment
+env.close()
+
