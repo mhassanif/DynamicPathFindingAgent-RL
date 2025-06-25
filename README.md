@@ -1,44 +1,79 @@
-# README: Custom Maze Game Environment
+# **Custom Maze Game Environment for Reinforcement Learning**
 
-## Overview
+## **Overview**
 
-This project demonstrates the creation of a custom Gymnasium environment for Reinforcement Learning (RL). The environment features a maze with obstacles, a start position, a goal, and a death-pit cell that ends the game with a penalty if the agent steps into it. The environment is designed to be compatible with **Stable-Baselines3**, making it suitable for applying RL algorithms to solve the maze.
+This project demonstrates the creation and utilization of a custom Gymnasium environment for Reinforcement Learning (RL). The environment simulates a maze with customizable elements such as obstacles, death-pits, a start position, and a goal. The agent learns to navigate the maze using **Stable-Baselines3 (SB3)** reinforcement learning algorithms.
 
-![alt text](utils/screenshot.png)
-
-## Demo Video
-```
-https://drive.google.com/file/d/11j2hhNSLZNuGT9sk-3PGglSV1LwqpxXw/view?usp=sharing
-```
-
-## Features
-
-1. **Customizable Maze Layout**: Define the maze with starting (`S`), goal (`G`), obstacles (`#`), death-pits (`P`), and empty spaces (`.`).
-2. **Interactive Rendering**: Visualize the environment using **Pygame**, including graphical representations of all elements (start, goal, obstacles, pits, and agent).
-3. **Termination Conditions**:
-
-   * Reaching the goal provides a reward and ends the episode.
-   * Falling into a death-pit ends the episode with a penalty.
-4. **Compatibility with RL Libraries**: Built to work with **Stable-Baselines3** for RL model training.
+The environment is fully compatible with SB3, allowing seamless integration for training and testing RL models.
 
 ---
 
-## Dependencies :
-   * `gymnasium`
-   * `pygame`
-   * `numpy`
+## **Demo**
+
+![Environment Screenshot](utils/screenshot.png)
+
+**Watch the Demo Video**:
+[Demo Video Link](https://drive.google.com/file/d/11j2hhNSLZNuGT9sk-3PGglSV1LwqpxXw/view?usp=sharing)
+
+---
+
+## **Features**
+
+1. **Customizable Maze Layout**:
+
+   * Define maze elements with:
+
+     * `S`: Starting position
+     * `G`: Goal position
+     * `#`: Obstacles
+     * `P`: Death-pits (penalize and terminate the episode)
+     * `.`: Empty cells
+2. **Dynamic Agent Behavior**:
+
+   * The agent receives rewards for reaching the goal and penalties for inefficiency or stepping into a death-pit.
+3. **Rendering with Pygame**:
+
+   * Visualize the maze environment with graphical elements.
+4. **Trained Models**:
+
+   * Train RL models using PPO (Proximal Policy Optimization) or other algorithms in SB3.
+   * Save and load models for reuse.
+5. **Validation**:
+
+   * The environment passes SB3's `check_env` validation for RL compatibility.
+
+---
+
+## **Project Structure**
+
+* **`MazeGameEnv.py`**: Defines the custom environment.
+* **`train_model.py`**: Script to train the model using PPO.
+* **`test_model.py`**: Script to test the trained model in a maze.
+* **`env_test.py`**: Script to run a random agent in the environment for debugging.
+
+---
+
+## **Dependencies**
+
+Install the required Python libraries:
 
 ```bash
-pip install gymnasium pygame numpy
+pip install gymnasium stable-baselines3 pygame numpy
 ```
 
 ---
 
-## Usage
+## **Custom Maze Environment**
 
-### Creating a Custom Maze
+The maze is a 2D grid where each cell can have one of the following:
 
-To create a custom maze, modify the `maze` configuration in `main.py`:
+* `S`: Starting position for the agent.
+* `G`: Goal cell with a positive reward.
+* `#`: Obstacles that the agent cannot pass through.
+* `P`: Death-pits that terminate the episode with a penalty.
+* `.`: Empty space where the agent can move freely.
+
+**Example Maze Configuration**:
 
 ```python
 maze = [
@@ -49,26 +84,139 @@ maze = [
 ]
 ```
 
-* `S`: Starting position
-* `G`: Goal position
-* `.`: Empty space
-* `#`: Obstacle
-* `P`: Death-pit
+---
 
-### Setup Instructions
+## **How to Use**
 
-1. Clone the repository:
+### **1. Environment Validation**
 
-   ```bash
-   git clone <repository_url>
-   cd <repository_directory>
-   ```
-2. Run the `main.py` script to test the environment:
+Validate the environment using SB3’s `check_env` utility to ensure compatibility:
 
-   ```bash
-   python main.py
-   ```
+```python
+from stable_baselines3.common.env_checker import check_env
+from MazeGameEnv import MazeGameEnv
 
-   This will render the maze and simulate random actions by the agent.
+maze = [
+    ['S', '.', '.', '.'],
+    ['.', '#', 'P', '#'],
+    ['.', '.', '.', '.'],
+    ['#', '.', '#', 'G'],
+]
+
+env = MazeGameEnv(maze)
+check_env(env, warn=True)
+```
 
 ---
+
+### **2. Training the Model**
+
+Train the agent to solve the maze using PPO:
+
+```python
+from stable_baselines3 import PPO
+from MazeGameEnv import MazeGameEnv
+
+maze = [
+    ['S', '.', '.', '.'],
+    ['.', '#', 'P', '#'],
+    ['.', '.', '.', '.'],
+    ['#', '.', '#', 'G'],
+]
+
+# Instantiate the environment
+env = MazeGameEnv(maze)
+
+# Create the PPO model
+model = PPO("MlpPolicy", env, verbose=1)
+
+# Train the model
+model.learn(total_timesteps=100000)
+
+# Save the model
+model.save("ppo_maze_model")
+
+# Close the environment
+env.close()
+```
+
+---
+
+### **3. Testing the Model**
+
+Test the trained model on the maze:
+
+```python
+from stable_baselines3 import PPO
+from MazeGameEnv import MazeGameEnv
+
+maze = [
+    ['S', '.', '.', '.'],
+    ['.', '#', 'P', '#'],
+    ['.', '.', '.', '.'],
+    ['#', '.', '#', 'G'],
+]
+
+# Instantiate the environment
+env = MazeGameEnv(maze)
+
+# Load the trained model
+model = PPO.load("ppo_maze_model")
+
+# Test the model
+obs, _ = env.reset()
+for step in range(1000):
+    action, _ = model.predict(obs, deterministic=True)
+    obs, reward, terminated, truncated, info = env.step(action)
+    env.render()
+
+    if terminated or truncated:
+        print(f"Episode finished: {info}")
+        obs, _ = env.reset()
+
+env.close()
+```
+
+---
+
+### **4. Debugging with a Random Agent**
+
+Run a random agent in the environment to debug:
+
+```python
+from MazeGameEnv import MazeGameEnv
+import pygame
+
+maze = [
+    ['S', '.', '.', '.'],
+    ['.', '#', 'P', '#'],
+    ['.', '.', '.', '.'],
+    ['#', '.', '#', 'G'],
+]
+
+env = MazeGameEnv(maze)
+obs, _ = env.reset()
+
+for step in range(20):
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            env.close()
+            exit()
+
+    action = env.action_space.sample()
+    obs, reward, terminated, truncated, info = env.step(action)
+    env.render()
+
+    if terminated or truncated:
+        break
+
+env.close()
+```
+
+---
+
+## **Tips**
+
+* Modify `max_steps` in `MazeGameEnv` for longer or shorter episodes.
+* Train on diverse maze layouts to make the agent robust to variations.
+* Use exploration during testing (`deterministic=False`) to discover alternative paths.
