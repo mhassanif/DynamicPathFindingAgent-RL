@@ -8,8 +8,8 @@ class MazeGameEnv(gym.Env):
     def __init__(self, size):
         super(MazeGameEnv, self).__init__()
         self.size = size  # size x size grid 
-        self.num_obstacles = int(0.2 * size * size)  # 20% of cells
-        self.num_pits = int(0.1 * size * size)  # 10% of cells
+        self.num_obstacles = int(0.1 * size * size)  # 10% of cells
+        self.num_pits = int(0.05 * size * size)  # 5% of cells
 
         self.start_pos = None
         self.goal_pos = None
@@ -17,10 +17,10 @@ class MazeGameEnv(gym.Env):
         self.pit_positions = []
         self.current_pos = None
 
-        # 4 possible actions: 0=up, 1=down, 2=left, 3=right
+        # 4 possible movments 
         self.action_space = spaces.Discrete(4)
 
-        # Observation space is a 2D position normalized between 0 and 1
+        # current position normalized to [0, 1] regardless of maze size
         self.observation_space = spaces.Box(low=0, high=1, shape=(2,), dtype=np.float32)
 
         # Max steps before truncation
@@ -29,24 +29,23 @@ class MazeGameEnv(gym.Env):
 
         # Initialize Pygame
         pygame.init()
-        self.cell_size = 125
+        self.cell_size = 70
         self.screen = None
 
     def _generate_maze(self):
-        # Randomly set start and goal positions
-        self.start_pos = (0, 0)  # Fixed for simplicity
+        self.start_pos = (0, 0)  # top-left corner
         self.goal_pos = (self.size - 1, self.size - 1)  # Bottom-right corner
 
         # Generate valid positions excluding start and goal
         valid_positions = [
             (r, c) for r in range(self.size) for c in range(self.size)
-            if (r, c) not in [self.start_pos, self.goal_pos]
+            if (r, c) not in [self.start_pos, self.goal_pos,(0,1),(1,0),(self.size - 2, self.size - 1),(self.size - 1, self.size - 2)]
         ]
 
         # Place obstacles
         self.obstacle_positions = random.sample(valid_positions, self.num_obstacles)
 
-        # Exclude obstacles from remaining positions for pits
+        # remaining positions for pits
         remaining_positions = [
             pos for pos in valid_positions if pos not in self.obstacle_positions
         ]
