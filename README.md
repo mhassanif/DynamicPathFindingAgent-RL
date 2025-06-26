@@ -43,7 +43,7 @@ The environment is fully compatible with **Stable-Baselines3 (SB3)**, providing 
 ![Environment Screenshot](utils/screenshot.png)
 
 **Watch the Demo Video**:
-[Demo Video Link](https://drive.google.com/file/d/11j2hhNSLZNuGT9sk-3PGglSV1LwqpxXw/view?usp=sharing)
+[Demo Video Link](https://drive.google.com/file/d/1maQVQ_X9GDguwgR0MXM91u65dXG7be1s/view?usp=sharing)
 
 ---
 
