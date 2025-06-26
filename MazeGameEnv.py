@@ -4,12 +4,13 @@ import numpy as np
 import pygame
 import random
 
+
 class MazeGameEnv(gym.Env):
     def __init__(self, size):
         super(MazeGameEnv, self).__init__()
         self.size = size  # size x size grid 
-        self.num_obstacles = int(0.1 * size * size)  # 10% of cells
-        self.num_pits = int(0.05 * size * size)  # 5% of cells
+        self.num_obstacles = int(0.10 * size * size)  # 10% of cells
+        self.num_pits = int(0.10 * size * size)  # 5% of cells
 
         self.start_pos = None
         self.goal_pos = None
@@ -17,14 +18,17 @@ class MazeGameEnv(gym.Env):
         self.pit_positions = []
         self.current_pos = None
 
-        # 4 possible movments 
+        # 4 possible movements
         self.action_space = spaces.Discrete(4)
 
-        # current position normalized to [0, 1] regardless of maze size
-        self.observation_space = spaces.Box(low=0, high=1, shape=(2,), dtype=np.float32)
+        # Observation space: agent position (normalized) + 4 one-step-ahead cell types
+        self.observation_space = spaces.Dict({
+            "position": spaces.Box(low=0, high=1, shape=(2,), dtype=np.float32),
+            "visibility": spaces.MultiDiscrete([4] * 4),  # 4 cells (up, down, left, right), 4 possible states each
+        })
 
         # Max steps before truncation
-        self.max_steps = 200
+        self.max_steps = 100
         self.steps = 0
 
         # Initialize Pygame
@@ -33,23 +37,40 @@ class MazeGameEnv(gym.Env):
         self.screen = None
 
     def _generate_maze(self):
-        self.start_pos = (0, 0)  # top-left corner
-        self.goal_pos = (self.size - 1, self.size - 1)  # Bottom-right corner
-
-        # Generate valid positions excluding start and goal
+        # Generate valid positions for start and goal
         valid_positions = [
             (r, c) for r in range(self.size) for c in range(self.size)
-            if (r, c) not in [self.start_pos, self.goal_pos,(0,1),(1,0),(self.size - 2, self.size - 1),(self.size - 1, self.size - 2)]
         ]
-
+    
+        # Randomize the start position
+        self.start_pos = random.choice(valid_positions)
+        valid_positions.remove(self.start_pos)  # Remove the start position from valid positions
+    
+        # Randomize the goal position
+        self.goal_pos = random.choice(valid_positions)
+        valid_positions.remove(self.goal_pos)  # Remove the goal position from valid positions
+    
+        # Ensure some buffer around start and goal (optional)
+        buffer_positions = [
+            (self.start_pos[0] + dr, self.start_pos[1] + dc)
+            for dr, dc in [(-1, 0), (1, 0), (0, -1), (0, 1)]
+            if 0 <= self.start_pos[0] + dr < self.size and 0 <= self.start_pos[1] + dc < self.size
+        ] + [
+            (self.goal_pos[0] + dr, self.goal_pos[1] + dc)
+            for dr, dc in [(-1, 0), (1, 0), (0, -1), (0, 1)]
+            if 0 <= self.goal_pos[0] + dr < self.size and 0 <= self.goal_pos[1] + dc < self.size
+        ]
+        valid_positions = [pos for pos in valid_positions if pos not in buffer_positions]
+    
         # Place obstacles
         self.obstacle_positions = random.sample(valid_positions, self.num_obstacles)
-
-        # remaining positions for pits
+    
+        # Remaining positions for pits
         remaining_positions = [
             pos for pos in valid_positions if pos not in self.obstacle_positions
         ]
         self.pit_positions = random.sample(remaining_positions, self.num_pits)
+
 
     def reset(self, seed=None, options=None):
         super().reset(seed=seed)  # Reset environment with a new seed
@@ -110,7 +131,30 @@ class MazeGameEnv(gym.Env):
         return True
 
     def _get_obs(self):
-        return np.array(self.current_pos, dtype=np.float32) / (self.size - 1)
+        # Current position normalized
+        position = np.array(self.current_pos, dtype=np.float32) / (self.size - 1)
+        
+        # One-step-ahead visibility
+        visibility = [
+            self._get_cell_type(self.current_pos[0] - 1, self.current_pos[1]),  # Up
+            self._get_cell_type(self.current_pos[0] + 1, self.current_pos[1]),  # Down
+            self._get_cell_type(self.current_pos[0], self.current_pos[1] - 1),  # Left
+            self._get_cell_type(self.current_pos[0], self.current_pos[1] + 1),  # Right
+        ]
+        
+        return {"position": position, "visibility": np.array(visibility, dtype=np.int32)}
+
+    def _get_cell_type(self, row, col):
+        """Returns the type of a cell: 0=empty, 1=obstacle, 2=pit, 3=goal."""
+        if row < 0 or col < 0 or row >= self.size or col >= self.size:
+            return 1  # Treat out-of-bounds as obstacle
+        if (row, col) in self.obstacle_positions:
+            return 1  # Obstacle
+        if (row, col) in self.pit_positions:
+            return 2  # Pit
+        if (row, col) == self.goal_pos:
+            return 3  # Goal
+        return 0  # Empty
 
     def render(self):
         try:
@@ -161,7 +205,6 @@ class MazeGameEnv(gym.Env):
 
         # Update the display
         pygame.display.update()
-
 
     def close(self):
         if pygame.get_init():
