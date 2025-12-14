@@ -7,7 +7,6 @@ env = MazeGameEnv(size=6)
 # Load the trained model
 model = PPO.load("ppo_dynamic_maze_model", policy="MultiInputPolicy")
 
-
 # Test the model and log observations
 obs, _ = env.reset()
 for step in range(1000):  
